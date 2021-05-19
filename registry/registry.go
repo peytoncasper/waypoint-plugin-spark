@@ -1,16 +1,17 @@
 package registry
 
 import (
+	"cloud.google.com/go/storage"
 	"context"
-	"fmt"
-
-	"github.com/peytoncasper/waypoint-plugin-spark/builder"
 	"github.com/hashicorp/waypoint-plugin-sdk/terminal"
+	"github.com/peytoncasper/waypoint-plugin-spark/builder"
+	"io/ioutil"
+	"os"
+	"path"
 )
 
 type RegistryConfig struct {
-	Name    string "hcl:name"
-	Version string "hcl:version"
+	Bucket  string `hcl:"bucket"`
 }
 
 type Registry struct {
@@ -24,16 +25,16 @@ func (r *Registry) Config() (interface{}, error) {
 
 // Implement ConfigurableNotify
 func (r *Registry) ConfigSet(config interface{}) error {
-	c, ok := config.(*RegistryConfig)
-	if !ok {
-		// The Waypoint SDK should ensure this never gets hit
-		return fmt.Errorf("Expected *RegisterConfig as parameter")
-	}
+	//c, ok := config.(*RegistryConfig)
+	//if !ok {
+	//	// The Waypoint SDK should ensure this never gets hit
+	//	return fmt.Errorf("Expected *RegisterConfig as parameter")
+	//}
 
 	// validate the config
-	if c.Name == "" {
-		return fmt.Errorf("Name must be set to a valid directory")
-	}
+	//if c.Name == "" {
+	//	return fmt.Errorf("Name must be set to a valid directory")
+	//}
 
 	return nil
 }
@@ -75,7 +76,31 @@ func (r *Registry) push(ctx context.Context, ui terminal.UI, binary *builder.Bin
 	defer u.Close()
 	u.Update("Pushing binary to registry")
 
-	return &Artifact{}, nil
+	u.Step(terminal.InfoStyle, os.Getenv("DATABASE_URL"))
+
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	fileName := path.Base(binary.Path)
+	fiile, err := ioutil.ReadFile(binary.Path)
+
+
+	obj := client.Bucket(r.config.Bucket).Object(fileName)
+
+	w := obj.NewWriter(ctx)
+	_, err = w.Write(fiile)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if err := w.Close(); err != nil {
+		return nil, err
+	}
+
+	return &Artifact{Bucket: r.config.Bucket, Name: fileName}, nil
 }
 
 // Implement Authenticator

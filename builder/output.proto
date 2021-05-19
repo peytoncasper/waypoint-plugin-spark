@@ -6,5 +6,6 @@ package platform;
 option go_package = "github.com/peytoncasper/waypoint-plugin-spark/builder";
 
 message Binary {
-  string location = 1;
+  string type = 1;
+  string path = 2;
 }

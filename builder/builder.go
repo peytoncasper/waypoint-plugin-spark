@@ -1,14 +1,21 @@
 package builder
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"os"
+	"os/exec"
+	"strings"
 
 	"github.com/hashicorp/waypoint-plugin-sdk/terminal"
 )
 
 type BuildConfig struct {
-	Directory string `hcl:"directory,optional"`
+	Type 	   string `hcl:"type"`
+	Directory  string `hcl:"directory,optional"`
+	OutputPath string `hcl:"output_path,optional"`
 }
 
 type Builder struct {
@@ -28,9 +35,13 @@ func (b *Builder) ConfigSet(config interface{}) error {
 		return fmt.Errorf("Expected *BuildConfig as parameter")
 	}
 
-	// validate the config
+	if c.Type == "" {
+		return fmt.Errorf("Spark Job type needs to be set")
+	}
+
 	if c.Directory == "" {
-		return fmt.Errorf("Directory must be set to a valid directory")
+		fmt.Printf("Directory not set, defaulting to current directory")
+		c.Directory = "."
 	}
 
 	return nil
@@ -70,5 +81,37 @@ func (b *Builder) build(ctx context.Context, ui terminal.UI) (*Binary, error) {
 	defer u.Close()
 	u.Update("Building application")
 
-	return &Binary{}, nil
+	u.Step(terminal.InfoStyle, os.Getenv("DATABASE_URL"))
+
+	outputArg := fmt.Sprintf("set assemblyOutputPath in assembly := new File(\"%s\")", b.config.OutputPath)
+
+	c := exec.Command(
+		"sbt",
+		outputArg,
+		"assembly",
+	)
+	c.Dir = b.config.Directory
+
+	_, w := io.Pipe()
+	defer w.Close()
+	c.Stdout = w
+
+	var b2 bytes.Buffer
+	c.Stdout = &b2
+
+	io.Copy(os.Stdout, &b2)
+
+
+	err := c.Run()
+	c.Wait()
+
+	for _, line := range strings.Split(b2.String(), "\n") {
+		u.Step(terminal.StatusOK, line)
+	}
+
+	if err != nil{
+		return nil, err
+	}
+
+	return &Binary{ Type: b.config.Type, Path: b.config.Directory + "/" + b.config.OutputPath }, nil
 }

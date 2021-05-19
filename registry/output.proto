@@ -6,5 +6,6 @@ package registry;
 option go_package = "github.com/peytoncasper/waypoint-plugin-spark/registry";
 
 message Artifact {
-  string source = 1;
+  string bucket = 1;
+  string name = 2;
 }

@@ -1,11 +1,10 @@
 package main
 
 import (
+	sdk "github.com/hashicorp/waypoint-plugin-sdk"
 	"github.com/peytoncasper/waypoint-plugin-spark/builder"
 	"github.com/peytoncasper/waypoint-plugin-spark/platform"
 	"github.com/peytoncasper/waypoint-plugin-spark/registry"
-	"github.com/peytoncasper/waypoint-plugin-spark/release"
-	sdk "github.com/hashicorp/waypoint-plugin-sdk"
 )
 
 func main() {
@@ -19,6 +18,6 @@ func main() {
 		&builder.Builder{},
 		&registry.Registry{},
 		&platform.Platform{},
-		&release.ReleaseManager{},
+		//&release.ReleaseManager{},
 	))
 }

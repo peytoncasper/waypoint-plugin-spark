@@ -1,4 +1,4 @@
-PLUGIN_NAME=waypoint-plugin-spark
+PLUGIN_NAME=spark
 
 ifndef _ARCH
 _ARCH := $(shell ./print_arch)
@@ -14,10 +14,10 @@ protos:
 	@echo ""
 	@echo "Build Protos"
 
-	protoc -I . --go_out=plugins=grpc:. --go_opt=paths=source_relative ./builder/output.proto
-	protoc -I . --go_out=plugins=grpc:. --go_opt=paths=source_relative ./registry/output.proto
-	protoc -I . --go_out=plugins=grpc:. --go_opt=paths=source_relative ./platform/output.proto
-	protoc -I . --go_out=plugins=grpc:. --go_opt=paths=source_relative ./release/output.proto
+	protoc -I . --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative ./builder/output.proto
+	protoc -I . --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative ./registry/output.proto
+	protoc -I . --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative ./platform/output.proto
+	protoc -I . --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative ./release/output.proto
 
 # Builds the plugin on your local machine
 build:
@@ -27,17 +27,18 @@ build:
 	# Clear the output
 	rm -rf ./bin
 
-	GOOS=linux GOARCH=amd64 go build -o ./bin/linux_amd64/waypoint-plugin-${PLUGIN_NAME} ./main.go 
-	GOOS=darwin GOARCH=amd64 go build -o ./bin/darwin_amd64/waypoint-plugin-${PLUGIN_NAME} ./main.go 
-	GOOS=windows GOARCH=amd64 go build -o ./bin/windows_amd64/waypoint-plugin-${PLUGIN_NAME}.exe ./main.go 
-	GOOS=windows GOARCH=386 go build -o ./bin/windows_386/waypoint-plugin-${PLUGIN_NAME}.exe ./main.go 
+#	GOOS=linux GOARCH=amd64 go build -o ./bin/linux_amd64/waypoint-plugin-${PLUGIN_NAME} ./main.go
+	GOOS=darwin GOARCH=amd64 go build -o ./bin/darwin_amd64/waypoint-plugin-${PLUGIN_NAME} ./main.go
+	#GOOS=darwin GOARCH=arm64 go build -o ./bin/darwin_arm64/waypoint-plugin-${PLUGIN_NAME} ./main.go
+	#GOOS=windows GOARCH=amd64 go build -o ./bin/windows_amd64/waypoint-plugin-${PLUGIN_NAME}.exe ./main.go
+#	GOOS=windows GOARCH=386 go build -o ./bin/windows_386/waypoint-plugin-${PLUGIN_NAME}.exe ./main.go
 
 # Install the plugin locally
 install:
 	@echo ""
 	@echo "Installing Plugin"
 
-	cp ./bin/${_ARCH}_amd64/waypoint-plugin-${PLUGIN_NAME}* ${HOME}/.config/waypoint/plugins/   
+	cp ./bin/${_ARCH}_amd64/waypoint-plugin-${PLUGIN_NAME}* ${HOME}/.config/waypoint/plugins/
 
 # Zip the built plugin binaries
 zip:
