@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/waypoint-plugin-sdk/terminal"
-	"github.com/peytoncasper/waypoint-plugin-spark/registry"
 	"google.golang.org/api/option"
 	dataprocpb "google.golang.org/genproto/googleapis/cloud/dataproc/v1"
 	"io/ioutil"
@@ -80,10 +79,12 @@ func (p *Platform) DeployFunc() interface{} {
 // as an input parameter.
 // If an error is returned, Waypoint stops the execution flow and
 // returns an error to the user.
-func (b *Platform) deploy(ctx context.Context, ui terminal.UI, artifact *registry.Artifact) (*Deployment, error) {
+func (b *Platform) deploy(ctx context.Context, ui terminal.UI) (*Deployment, error) {
 	u := ui.Status()
 	defer u.Close()
 	u.Update("Deploy application")
+
+	//u.Step(terminal.StatusOK, "To: " + deployConfig.Env())
 
 	file, err := os.Open("cluster_config.json")
 	if err != nil {
